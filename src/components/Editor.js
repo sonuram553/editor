@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Slate, Editable, withReact } from "slate-react";
-import { createEditor } from "slate";
+import { createEditor, Node } from "slate";
 import { CustomEditor } from "./CustomEditor";
 
 export const Editor = () => {
@@ -26,7 +26,7 @@ export const Editor = () => {
       value={value}
       onChange={(value) => {
         setValue(value);
-        localStorage.setItem("editorContent", JSON.stringify(value));
+        localStorage.setItem("editorContent", serialize(value));
       }}
     >
       <div>
@@ -65,7 +65,7 @@ export const Editor = () => {
 
 const getInitialValue = () => {
   return (
-    JSON.parse(localStorage.getItem("editorContent")) || [
+    deserialize(localStorage.getItem("editorContent")) || [
       {
         type: "paragraph",
         children: [{ text: "This is the first line of a paragraph." }],
@@ -91,5 +91,18 @@ const Leaf = ({ leaf, attributes, children }) => {
     <span {...attributes} style={{ fontWeight: leaf.bold ? "bold" : "normal" }}>
       {children}
     </span>
+  );
+};
+
+const serialize = (value) => {
+  return value && value.map((n) => Node.string(n)).join("\n");
+};
+
+const deserialize = (value) => {
+  return (
+    value &&
+    value
+      .split("\n")
+      .map((line) => ({ type: "paragraph", children: [{ text: line }] }))
   );
 };
