@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useReducer, useState } from "react";
 import { Slate, Editable, withReact } from "slate-react";
-import { createEditor, Node } from "slate";
+import { createEditor, Node, Transforms } from "slate";
 import { CustomEditor } from "./CustomEditor";
 
 export const Editor = () => {
   const editor = useMemo(() => withReact(createEditor()), []);
+  const [ignored, forceUpdate] = useReducer((x) => x + 1, 0);
   const [value, setValue] = useState(getInitialValue());
 
   const renderElement = useCallback((props) => {
@@ -36,8 +37,20 @@ export const Editor = () => {
         <button onClick={() => CustomEditor.toggleCodeBlock(editor)}>
           Code
         </button>
+        <button
+          onClick={() => {
+            Transforms.select(editor, {
+              path: [1, 0],
+              offset: 10,
+            });
+            forceUpdate();
+          }}
+        >
+          Focus
+        </button>
       </div>
       <Editable
+        autoFocus={ignored}
         renderElement={renderElement}
         renderLeaf={renderLeaf}
         onKeyDown={(e) => {
@@ -64,14 +77,16 @@ export const Editor = () => {
 };
 
 const getInitialValue = () => {
-  return (
-    deserialize(localStorage.getItem("editorContent")) || [
-      {
-        type: "paragraph",
-        children: [{ text: "This is the first line of a paragraph." }],
-      },
-    ]
-  );
+  return [
+    {
+      type: "paragraph",
+      children: [{ text: "This is the first line of a paragraph." }],
+    },
+    {
+      type: "paragraph",
+      children: [{ text: "This is the second line of a paragraph." }],
+    },
+  ];
 };
 
 const CodeElement = ({ attributes, children }) => {
